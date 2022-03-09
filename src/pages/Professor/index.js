@@ -1,81 +1,88 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
-import { alignPropType } from "react-bootstrap/esm/DropdownMenu";
+import { render } from "react-dom";
 import { toast } from "react-toastify";
 
 import ListView from "../../components/ListView/index";
 import Modal from "../../components/Modal/index";
 import Page from "../../components/Page/index";
 import api from "../../services/axios";
-import Courses from "../Courses";
 
 const endpoint = "/professor";
 
-const columns = [{
-
-    value: "ID",
-    id: "id",
-},
-{
-    value: "name",
-    id: "name",
-},
-{
-    value: "cpf",
-    id: "cpf",
-},
-{
-    value: "departmentId",
-    id: "departmentId",
-}
+const columns = [
+    {
+        value: "ID",
+        id: "id",
+    },
+    {
+        value: "Name",
+        id: "name"
+    },
+    {
+        value: "cpf",
+        id: "cpf"
+    },
+    {
+        Value: "Department",
+        id: "department",
+        render: (department) => department.name,
+    },
 ];
 
-const INITIAL_STATE = { id: 0, name: "", cpf: "", departament: 0 };
+const INITIAL_STATE = {
+    id: 0,
+    name: "",
+    cpf: "",
+    departmentId: 0
+};
 
-const professor = () => {
+const Professor = () => {
     const [visible, setVisible] = useState(false);
-    const [departament, setDepartaments] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [professor, setProfessor] = useState(INITIAL_STATE);
- 
+
     useEffect(() => {
         api
-          .get("/departments")
-          .then((response) => {
-            setDepartments(response.data);
-          })
-          .catch((error) => {
-            toast.error(error.message);
-          });
-      }, []);
+            .get("/departments")
+            .then((response) => {
+                setDepartments(response.data);
+            })
+            .catch((error) => {
+                toast.error(error.message);
+            });
+    }, []);
 
     const handleSave = async (refetch) => {
         try {
             if (professor.id) {
                 await api.put(`${endpoint}/${professor.id}`, {
-                    name: Courses.name,
+                    name: professor.name,
                     cpf: professor.cpf,
-                    departament: professor.departamentId,
-
+                    departmentId: professor.departmentId,
                 });
 
                 toast.success("Atualizado com sucesso!");
             } else {
                 await api.post(endpoint, { name: professor.name });
 
-                toast.success("Cadastro com Sucesso!");
+                toast.success("Cadastrado com sucesso");
             }
+
             setVisible(false);
+
             await refetch();
         } catch (erro) {
-            toast.erro(error.message);
+            toast.error(erro.message);
         }
     };
+
     const actions = [
         {
             name: "Edit",
             action: (_professor) => {
-                setProfessor(_professor)
-                setVisible(_true);
+                setProfessor(_professor);
+                setVisible(true);
             },
         },
         {
@@ -93,20 +100,27 @@ const professor = () => {
             },
         },
     ];
+
+    const onChange =({ target: {name,valeue}}) => {
+        setProfessor({
+            ...professor,
+            [name]: valeue,
+        })
+    }
     return (
         <Page title="Professor">
-            <Button
-                className="mb-2"
+            <Button className=""
                 onClick={() => {
                     setProfessor(INITIAL_STATE);
                     setVisible(true);
                 }}
-            >Criar Professor
+            >
+                Criar Professor
             </Button>
-            <ListView actions={actions} columns={columns} endpoint={endpoint}>
+            <ListView actions={actions} columns={columns} endpoit={endpoint}>
                 {({ refetch }) => (
                     <Modal
-                        title={`${professor.id ? "Update" : "Create"} Professor`}
+                        title={`${professor.id} ? "Update": "Create"} Professor`}
                         show={visible}
                         handleClose={() => setVisible(false)}
                         handleSave={() => handleSave(refetch)}
@@ -117,12 +131,29 @@ const professor = () => {
                                 <Form.Control
                                     name="professor"
                                     onChange={(event) =>
-                                        setProfessor({ ...professor, name: event.target.valeu0 })
+                                        setProfessor({ ...professor, name: event.currentTarget.value })
                                     }
                                     value={professor.name}
-                                ></Form.Control>
+                                />
                             </Form.Group>
-
+                            <Form.Group>
+                                <Form.Label>cpf</Form.Label>
+                                <Form.Control
+                                    name="cpf"
+                                    onChange={onChange}
+                                    value={professor.cpf}
+                                />
+                            </Form.Group>
+                            <Form.Group>
+                                <Form.Label>Departament Name</Form.Label>
+                                <Form.Control
+                                    name="departament"
+                                    onChange={onChange}
+                                       
+                                    
+                                    value={professor.departmentId}
+                                />
+                            </Form.Group>
                         </Form>
                     </Modal>
                 )}
@@ -131,5 +162,4 @@ const professor = () => {
     );
 };
 
-
-export default professor
+export default Professor;
